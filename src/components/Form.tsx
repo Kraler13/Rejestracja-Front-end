@@ -1,7 +1,10 @@
 import './Form.css';
+import config from '../config';
 import React, { FormEvent, useState, ChangeEvent } from "react";
 import Select from './Select';
 import axios from 'axios';
+import { EventObj } from "../types/Types";
+
 
 const Form = (): JSX.Element => {
   const [name, setName] = useState<string>('');
@@ -24,7 +27,7 @@ const Form = (): JSX.Element => {
     ['cracow', 'Kraków'],
   ];
 
-  const handleChangeName= (e: ChangeEvent<HTMLInputElement>) => {
+  const handleChangeName = (e: ChangeEvent<HTMLInputElement>) => {
     setName(e.target.value);
   };
   const handleChangeEvent = (e: ChangeEvent<HTMLSelectElement>) => {
@@ -41,14 +44,58 @@ const Form = (): JSX.Element => {
     });
   };
 
-  const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    // Obsługa przesyłania formularza (np. walidacja, wysyłanie danych do API)
-  };
+  const saveEvent = (eventObj: EventObj) => {
+    axios
+      .post(config.api.url + '/events/add', eventObj)
+      .then((res) => {
+        console.log(res)
+      })
+      .catch((err) => {
+        console.log(err)
+      })
+  }
 
+  const resetForm = () => {
+    setName('')
+    setEvent({ key: '', val: '' })
+    setCity({ key: '', val: '' })
+    setErrors([])
+  }
+
+  const validateForm = (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault()
+
+    let errorsValidate = []
+    if (name.trim() === '') {
+      errorsValidate.push('Wpisz Imię i Nazwizko')
+    }
+    if (event.key.trim() === '') {
+      errorsValidate.push('Wybierz kurs')
+    }
+    if (city.key.trim() === '') {
+      errorsValidate.push('Wybierz miasto')
+    }
+    if (errorsValidate.length > 0) {
+      if (errorsValidate.length > 0) {
+        setErrors(errorsValidate);
+        return false;
+      }
+      return false
+    }
+
+    const newEvent = {
+      name: name,
+      event: event,
+      city: city
+    }
+
+    saveEvent(newEvent)
+
+    resetForm()
+  }
   return (
     <div className="formWrapper">
-      <form action="#" onSubmit={handleSubmit}>
+      <form action="#" onSubmit={validateForm}>
         <div className="wrapper">
           <label htmlFor="name">Imię i nazwisko</label>
           <input
@@ -82,9 +129,8 @@ const Form = (): JSX.Element => {
       </form >
       <div className="errorsWrapper">
         <ul className="errors">
-          {/* Wyświetlanie błędów */}
-          {errors.map((error, index) => (
-            <li key={index}>{error}</li>
+          {errors.map((errorTxt, index) => (
+            <li key={index}>{errorTxt}</li>
           ))}
         </ul>
       </div>
